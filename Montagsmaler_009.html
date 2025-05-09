@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Montagsmaler Pro+ Fix</title>
+    <style>
+        :root { /* CSS Variable für den Zoom-Faktor direkt im Root definieren */
+            --zoom-factor: 1;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            color: #333;
+            overscroll-behavior: none;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            box-sizing: border-box;
+            align-items: center;
+            justify-content: center;
+            padding: calc(20px * var(--zoom-factor));
+            text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Setup Screen */
+        #setup-screen h1 {
+            font-size: calc(5vh * var(--zoom-factor));
+            margin-bottom: calc(30px * var(--zoom-factor));
+        }
+        .setting-group {
+            margin-bottom: calc(30px * var(--zoom-factor));
+        }
+        .setting-group label {
+            display: block;
+            font-size: calc(2.5vh * var(--zoom-factor));
+            margin-bottom: calc(10px * var(--zoom-factor));
+        }
+        .timer-setting, .start-index-setting {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(5vh * var(--zoom-factor));
+        }
+        .timer-setting button, .start-index-setting button {
+            font-size: calc(5vh * var(--zoom-factor));
+            padding: calc(10px * var(--zoom-factor)) calc(20px * var(--zoom-factor));
+            margin: 0 calc(15px * var(--zoom-factor));
+            min-width: calc(80px * var(--zoom-factor));
+            border-radius: calc(8px * var(--zoom-factor));
+            border: 1px solid #ccc;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .timer-setting button:active, .start-index-setting button:active {
+            background-color: #e0e0e0;
+        }
+        #game-duration-display, #start-index-display {
+            min-width: calc(100px * var(--zoom-factor));
+            font-weight: bold;
+            text-align: center; /* Bessere Darstellung der Zahl */
+        }
+        #start-game-btn, #fullscreen-btn-setup {
+            font-size: calc(4vh * var(--zoom-factor));
+            padding: calc(15px * var(--zoom-factor)) calc(30px * var(--zoom-factor));
+            border-radius: calc(10px * var(--zoom-factor));
+            border: none;
+            cursor: pointer;
+            background-color: #2196F3;
+            color: white;
+            margin-top: calc(10px * var(--zoom-factor));
+        }
+         #start-game-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+
+        /* Game Screen */
+        #game-screen-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: calc(10px * var(--zoom-factor)) calc(20px * var(--zoom-factor));
+            box-sizing: border-box;
+            background-color: #ddd;
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: calc(2.5vh * var(--zoom-factor));
+        }
+        #score-display-game, #timer-display-game {
+            font-weight: bold;
+        }
+        #score-display-game span, #timer-display-game span {
+            display: inline-block;
+            min-width: calc(40px * var(--zoom-factor));
+            text-align: right;
+        }
+         #fullscreen-btn-game {
+            font-size: calc(3vh * var(--zoom-factor));
+            padding: calc(8px * var(--zoom-factor)) calc(12px * var(--zoom-factor));
+            cursor: pointer;
+            background-color: #777;
+            color: white;
+            border: none;
+            border-radius: calc(5px * var(--zoom-factor));
+        }
+
+        #term-interaction-area {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            width: 100%;
+            padding-top: calc(70px * var(--zoom-factor));
+            padding-bottom: calc(20px * var(--zoom-factor));
+            box-sizing: border-box;
+        }
+
+        #term-display {
+            flex-grow: 1;
+            font-size: calc(7vw * var(--zoom-factor));
+            font-weight: bold;
+            line-height: 1.2;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            margin: 0 calc(10px * var(--zoom-factor));
+            max-width: 60%;
+        }
+
+        .side-button {
+            font-size: calc(8vh * var(--zoom-factor));
+            padding: calc(20px * var(--zoom-factor));
+            border: none;
+            border-radius: calc(15px * var(--zoom-factor));
+            cursor: pointer;
+            font-weight: bold;
+            min-width: calc(100px * var(--zoom-factor));
+            flex-shrink: 0;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .side-button:active {
+            transform: scale(0.95);
+        }
+
+        #skip-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        #correct-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        #no-more-terms-ingame {
+            font-size: calc(4vw * var(--zoom-factor));
+            color: #888;
+        }
+
+        /* Game Over Screen */
+        #game-over-screen h2 {
+            font-size: calc(5vh * var(--zoom-factor));
+            margin-bottom: calc(20px * var(--zoom-factor));
+        }
+        #final-score-display {
+            font-size: calc(7vh * var(--zoom-factor));
+            font-weight: bold;
+            margin-bottom: calc(40px * var(--zoom-factor));
+            color: #2196F3;
+        }
+        #restart-game-btn {
+            font-size: calc(4vh * var(--zoom-factor));
+            padding: calc(15px * var(--zoom-factor)) calc(30px * var(--zoom-factor));
+            border-radius: calc(10px * var(--zoom-factor));
+            border: none;
+            cursor: pointer;
+            background-color: #2196F3;
+            color: white;
+        }
+
+        /* Global Zoom Controls */
+        #zoom-controls {
+            position: fixed;
+            bottom: 10px; /* Fester Wert, da Zoom-Controls selbst nicht skaliert werden sollen */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background-color: rgba(200, 200, 200, 0.8);
+            padding: 8px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+        #zoom-controls button {
+            font-size: 2.5vh; /* Feste Größe für Zoom-Buttons */
+            padding: 5px 10px;
+            min-width: 50px;
+            border: 1px solid #999;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+         #zoom-controls button:active {
+            background-color: #d0d0d0;
+        }
+
+        /* Responsive Anpassungen (Basis bleibt, wird durch Zoom-Faktor beeinflusst) */
+        @media (max-height: 450px) and (orientation: landscape) {
+            #term-display {
+                font-size: calc(6vw * var(--zoom-factor));
+                 max-width: 50%;
+            }
+            .side-button {
+                font-size: calc(6vh * var(--zoom-factor));
+                padding: calc(15px * var(--zoom-factor));
+            }
+            #game-screen-header {
+                font-size: calc(2vh * var(--zoom-factor));
+                padding: calc(5px * var(--zoom-factor)) calc(15px * var(--zoom-factor));
+            }
+            #setup-screen h1 { font-size: calc(4vh * var(--zoom-factor)); }
+            .timer-setting, .start-index-setting { font-size: calc(4.5vh * var(--zoom-factor)); }
+            .timer-setting button, .start-index-setting button { font-size: calc(4.5vh * var(--zoom-factor)); padding: calc(8px * var(--zoom-factor)) calc(15px * var(--zoom-factor)); }
+            #start-game-btn, #fullscreen-btn-setup, #restart-game-btn { font-size: calc(3.5vh * var(--zoom-factor)); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="screen active">
+        <h1>Montagsmaler Einstellungen</h1>
+
+        <div class="setting-group">
+            <label for="game-duration-display">Spieldauer (Sekunden):</label>
+            <div class="timer-setting">
+                <button id="decrease-time-btn">-</button>
+                <span id="game-duration-display">60</span>
+                <button id="increase-time-btn">+</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <label for="start-index-display">Starte bei Begriff Nr.:</label>
+            <div class="start-index-setting">
+                <button id="decrease-index-btn">-10</button> <!-- Geändert -->
+                <span id="start-index-display">1</span>
+                <button id="increase-index-btn">+10</button> <!-- Geändert -->
+            </div>
+        </div>
+
+        <button id="start-game-btn">Los!</button>
+        <button id="fullscreen-btn-setup">Vollbild</button>
+        <p id="all-terms-played-message" style="display:none; color: red; margin-top: 20px;">Alle Begriffe wurden gespielt! Setze den Startindex zurück oder lade die Seite neu.</p>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div id="game-screen-header">
+            <div id="score-display-game">Punkte: <span id="score">0</span></div>
+            <button id="fullscreen-btn-game">Vollbild</button>
+            <div id="timer-display-game">Zeit: <span id="time-left">0</span>s</div>
+        </div>
+        <div id="term-interaction-area">
+            <button id="skip-btn" class="side-button">❌</button>
+            <div id="term-display">Begriff lädt...</div>
+            <button id="correct-btn" class="side-button">✅</button>
+        </div>
+        <div id="no-more-terms-ingame" style="display:none;">Keine weiteren Begriffe verfügbar für diese Runde.</div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen">
+        <h2>Zeit um!</h2>
+        <p>Deine Punktzahl:</p>
+        <div id="final-score-display">0</div>
+        <button id="restart-game-btn">Neue Runde</button>
+    </div>
+
+    <!-- Global Zoom Controls -->
+    <div id="zoom-controls">
+        <button id="zoom-out-btn">-</button>
+        <button id="zoom-in-btn">+</button>
+    </div>
+
+    <script>
+        const MASTER_TERMS_LIST = [
+            "Apfel", "Auto", "Banane", "Baum", "Blume", "Buch", "Brille", "Boot", "Ball", "Bett",
+            "Clown", "Computer", "Dach", "Drache", "Eis", "Elefant", "Ente", "Fahrrad", "Fenster", "Fisch",
+            "Flugzeug", "Gabel", "Geschenk", "Gitarre", "Glas", "Hammer", "Hand", "Haus", "Herz", "Hose",
+            "Hund", "Hut", "Insel", "Jacke", "Kaffee", "Kamera", "Katze", "Kerze", "Kino", "Knopf",
+            "Koch", "Koffer", "König", "Kuchen", "Lampe", "Leiter", "Licht", "Löffel", "Maus", "Messer",
+            "Mond", "Musik", "Nase", "Nest", "Orange", "Palme", "Papier", "Pferd", "Pilz", "Pizza",
+            "Pinsel", "Pirat", "Polizei", "Puppe", "Rakete", "Regen", "Reifen", "Ring", "Roboter", "Rose",
+            "Schaf", "Schere", "Schiff", "Schirm", "Schlange", "Schlüssel", "Schmetterling", "Schnee", "Schuh", "Schule",
+            "Sofa", "Sonne", "Spinne", "Stern", "Stift", "Stuhl", "Tasse", "Telefon", "Teller", "Tiger",
+            "Tisch", "Tomate", "Tor", "Treppe", "Tür", "Uhr", "Vogel", "Wolke", "Zahn", "Zaun",
+            "Zelt", "Zitrone", "Zug", "Zwerg"
+        ];
+
+        let sessionStartIndex = 0;
+        let currentRoundStartIndexUserSetting = 1;
+
+        let currentShuffledTermsForRound = [];
+        let currentTermInRoundIndex = 0;
+        let score = 0;
+        let gameDuration = 60;
+        let timerInterval;
+        let timeLeft = 0;
+        let currentZoomFactor = 1.0;
+
+        // DOM Elements
+        const screens = {
+            setup: document.getElementById('setup-screen'),
+            game: document.getElementById('game-screen'),
+            gameOver: document.getElementById('game-over-screen')
+        };
+        // Setup Screen
+        const decreaseTimeBtn = document.getElementById('decrease-time-btn');
+        const increaseTimeBtn = document.getElementById('increase-time-btn');
+        const gameDurationDisplay = document.getElementById('game-duration-display');
+        const decreaseIndexBtn = document.getElementById('decrease-index-btn');
+        const increaseIndexBtn = document.getElementById('increase-index-btn');
+        const startIndexDisplay = document.getElementById('start-index-display');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const allTermsPlayedMessage = document.getElementById('all-terms-played-message');
+        // Game Screen
+        const scoreDisplayGame = document.getElementById('score');
+        const timerDisplayGame = document.getElementById('time-left');
+        const termDisplayElement = document.getElementById('term-display');
+        const correctButton = document.getElementById('correct-btn');
+        const skipButton = document.getElementById('skip-btn');
+        const noMoreTermsIngameMsg = document.getElementById('no-more-terms-ingame');
+        // Game Over Screen
+        const finalScoreDisplay = document.getElementById('final-score-display');
+        const restartGameBtn = document.getElementById('restart-game-btn');
+        // Fullscreen
+        const fullscreenBtnSetup = document.getElementById('fullscreen-btn-setup');
+        const fullscreenBtnGame = document.getElementById('fullscreen-btn-game');
+        // Zoom
+        const zoomOutBtn = document.getElementById('zoom-out-btn'); // Sicherstellen, dass die IDs stimmen
+        const zoomInBtn = document.getElementById('zoom-in-btn');   // Sicherstellen, dass die IDs stimmen
+        const rootElement = document.documentElement; // Korrekt, :root ist documentElement
+
+
+        function showScreen(screenId) {
+            for (const id in screens) {
+                screens[id].classList.remove('active');
+            }
+            screens[screenId].classList.add('active');
+        }
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // --- Timer Settings ---
+        function updateGameDurationDisplay() {
+            gameDurationDisplay.textContent = gameDuration;
+        }
+        decreaseTimeBtn.addEventListener('click', () => {
+            if (gameDuration > 30) { gameDuration -= 30; updateGameDurationDisplay(); }
+        });
+        increaseTimeBtn.addEventListener('click', () => {
+            if (gameDuration < 600) { gameDuration += 30; updateGameDurationDisplay(); }
+        });
+
+        // --- Start Index Settings ---
+        function updateStartIndexDisplay() {
+            startIndexDisplay.textContent = currentRoundStartIndexUserSetting;
+            checkAvailableTermsAndSetButtonState();
+        }
+        decreaseIndexBtn.addEventListener('click', () => {
+            currentRoundStartIndexUserSetting = Math.max(1, currentRoundStartIndexUserSetting - 10); // In 10er Schritten, min 1
+            updateStartIndexDisplay();
+        });
+        increaseIndexBtn.addEventListener('click', () => {
+            currentRoundStartIndexUserSetting = Math.min(MASTER_TERMS_LIST.length, currentRoundStartIndexUserSetting + 10); // In 10er Schritten, max Listenlänge
+             // Korrektur: Wenn man +10 macht und über das Ende springt, auf das Ende setzen.
+            if (currentRoundStartIndexUserSetting > MASTER_TERMS_LIST.length) {
+                currentRoundStartIndexUserSetting = MASTER_TERMS_LIST.length;
+            }
+            updateStartIndexDisplay();
+        });
+        
+        function loadSessionStartIndex() {
+            const storedIndex = localStorage.getItem('montagsmalerSessionStartIndex');
+            if (storedIndex !== null) {
+                sessionStartIndex = parseInt(storedIndex, 10);
+                if (isNaN(sessionStartIndex) || sessionStartIndex < 0 || sessionStartIndex > MASTER_TERMS_LIST.length) {
+                    sessionStartIndex = 0; // Fallback bei ungültigem Wert
+                }
+            } else {
+                 sessionStartIndex = 0;
+            }
+            currentRoundStartIndexUserSetting = Math.max(1, Math.min(sessionStartIndex + 1, MASTER_TERMS_LIST.length || 1)); // Sicherstellen, dass es im Bereich liegt
+            updateStartIndexDisplay();
+        }
+
+        function saveSessionStartIndex(indexToSave) {
+            sessionStartIndex = Math.max(0, Math.min(indexToSave, MASTER_TERMS_LIST.length)); // Sicherstellen, dass es im Bereich liegt
+            localStorage.setItem('montagsmalerSessionStartIndex', sessionStartIndex);
+        }
+
+
+        function checkAvailableTermsAndSetButtonState() {
+            const effectiveStartIndex = currentRoundStartIndexUserSetting - 1;
+
+            if (effectiveStartIndex >= MASTER_TERMS_LIST.length || MASTER_TERMS_LIST.length === 0) {
+                startGameBtn.disabled = true;
+                allTermsPlayedMessage.style.display = 'block';
+                if (MASTER_TERMS_LIST.length === 0) {
+                    allTermsPlayedMessage.textContent = "Keine Begriffe in der Liste vorhanden!";
+                } else {
+                    allTermsPlayedMessage.textContent = "Startindex ist außerhalb der Begriffsliste oder keine Begriffe mehr verfügbar.";
+                }
+            } else {
+                startGameBtn.disabled = false;
+                allTermsPlayedMessage.style.display = 'none';
+            }
+        }
+
+        // --- Game Logic ---
+        startGameBtn.addEventListener('click', () => {
+            const termsForThisRound = MASTER_TERMS_LIST.slice(currentRoundStartIndexUserSetting - 1);
+            
+            if (termsForThisRound.length === 0) {
+                checkAvailableTermsAndSetButtonState();
+                return;
+            }
+
+            score = 0;
+            updateScoreDisplay();
+            currentShuffledTermsForRound = shuffleArray(termsForThisRound);
+            currentTermInRoundIndex = 0;
+            
+            noMoreTermsIngameMsg.style.display = 'none';
+            correctButton.disabled = false;
+            skipButton.disabled = false;
+
+            showNextTerm(); 
+            if (currentShuffledTermsForRound.length === 0) {
+                noMoreTermsIngameMsg.style.display = 'block';
+                correctButton.disabled = true;
+                skipButton.disabled = true;
+            }
+
+            timeLeft = gameDuration;
+            timerDisplayGame.textContent = timeLeft;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            showScreen('game');
+        });
+
+        function updateTimer() {
+            timeLeft--;
+            timerDisplayGame.textContent = timeLeft;
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplayGame.textContent = score;
+        }
+
+        function showNextTerm() {
+            if (currentTermInRoundIndex < currentShuffledTermsForRound.length) {
+                const termToShow = currentShuffledTermsForRound[currentTermInRoundIndex];
+                termDisplayElement.textContent = termToShow;
+
+                const masterListIndexOfCurrentTerm = MASTER_TERMS_LIST.indexOf(termToShow);
+                if (masterListIndexOfCurrentTerm !== -1) {
+                    let nextPotentialStart = masterListIndexOfCurrentTerm + 1;
+                    saveSessionStartIndex(nextPotentialStart);
+                }
+
+                noMoreTermsIngameMsg.style.display = 'none';
+                correctButton.disabled = false;
+                skipButton.disabled = false;
+            } else {
+                termDisplayElement.textContent = "-";
+                noMoreTermsIngameMsg.style.display = 'block';
+                correctButton.disabled = true;
+                skipButton.disabled = true;
+                 // Wenn keine Begriffe mehr in der Runde sind, sollte der sessionStartIndex ggf.
+                 // auf das Ende der Liste gesetzt werden, falls der User alle durchgespielt hat
+                 // oder auf den Start der *nächsten* verfügbaren, wenn er geskippt hat.
+                 // Die aktuelle Logik in saveSessionStartIndex(nextPotentialStart) sollte das abdecken,
+                 // da `nextPotentialStart` sich auf den gespielten Begriff bezieht.
+            }
+        }
+
+        correctButton.addEventListener('click', () => {
+            if (currentTermInRoundIndex < currentShuffledTermsForRound.length) {
+                score += 2;
+                currentTermInRoundIndex++;
+                updateScoreDisplay();
+                showNextTerm();
+            }
+        });
+
+        skipButton.addEventListener('click', () => {
+             if (currentTermInRoundIndex < currentShuffledTermsForRound.length) {
+                score = Math.max(0, score - 1);
+                currentTermInRoundIndex++;
+                updateScoreDisplay();
+                showNextTerm();
+            }
+        });
+
+        function endGame() {
+            clearInterval(timerInterval);
+            finalScoreDisplay.textContent = score;
+            showScreen('gameOver');
+        }
+
+        restartGameBtn.addEventListener('click', () => {
+            loadSessionStartIndex(); 
+            checkAvailableTermsAndSetButtonState();
+            showScreen('setup');
+        });
+
+        // --- Fullscreen API ---
+        function getFullscreenElement() {
+            return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+        }
+        function toggleFullscreen() {
+            if (getFullscreenElement()) {
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+            } else {
+                const element = document.documentElement;
+                if (element.requestFullscreen) element.requestFullscreen({ navigationUI: "hide" });
+                else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
+                else if (element.mozRequestFullScreen) element.mozRequestFullScreen();
+                else if (element.msRequestFullscreen) element.msRequestFullscreen();
+            }
+        }
+        function updateFullscreenButtonText(isFs) {
+             const text = isFs ? "Vollbild X" : "Vollbild";
+             if (fullscreenBtnSetup) fullscreenBtnSetup.textContent = text;
+             if (fullscreenBtnGame) fullscreenBtnGame.textContent = text;
+        }
+        if (fullscreenBtnSetup) fullscreenBtnSetup.addEventListener('click', toggleFullscreen);
+        if (fullscreenBtnGame) fullscreenBtnGame.addEventListener('click', toggleFullscreen);
+        
+        document.addEventListener('fullscreenchange', () => updateFullscreenButtonText(!!getFullscreenElement()));
+        document.addEventListener('webkitfullscreenchange', () => updateFullscreenButtonText(!!getFullscreenElement()));
+        document.addEventListener('mozfullscreenchange', () => updateFullscreenButtonText(!!getFullscreenElement()));
+        document.addEventListener('MSFullscreenChange', () => updateFullscreenButtonText(!!getFullscreenElement()));
+
+
+        // --- Zoom Functionality ---
+        function applyZoom() {
+            if (rootElement) { // Sicherstellen, dass rootElement existiert
+                rootElement.style.setProperty('--zoom-factor', currentZoomFactor.toFixed(2)); // .toFixed für saubere Werte
+            }
+            localStorage.setItem('montagsmalerZoomFactor', currentZoomFactor.toFixed(2));
+        }
+
+        if (zoomInBtn) { // Nur Event Listener hinzufügen, wenn Button existiert
+            zoomInBtn.addEventListener('click', () => {
+                currentZoomFactor = Math.min(2.0, currentZoomFactor + 0.1);
+                applyZoom();
+            });
+        }
+
+        if (zoomOutBtn) { // Nur Event Listener hinzufügen, wenn Button existiert
+            zoomOutBtn.addEventListener('click', () => {
+                currentZoomFactor = Math.max(0.5, currentZoomFactor - 0.1);
+                applyZoom();
+            });
+        }
+
+        function loadZoomFactor() {
+            const storedZoom = localStorage.getItem('montagsmalerZoomFactor');
+            if (storedZoom) {
+                currentZoomFactor = parseFloat(storedZoom);
+                if (isNaN(currentZoomFactor) || currentZoomFactor < 0.5 || currentZoomFactor > 2.0) {
+                    currentZoomFactor = 1.0; // Fallback
+                }
+            }
+            applyZoom();
+        }
+
+        // --- Initial setup ---
+        // DOM-Elemente müssen geladen sein, bevor EventListener hinzugefügt werden.
+        // Entweder Skript am Ende des Body, oder DOMContentLoaded verwenden.
+        // Da das Skript am Ende ist, sollte es okay sein.
+
+        updateGameDurationDisplay();
+        loadSessionStartIndex(); 
+        loadZoomFactor(); 
+        checkAvailableTermsAndSetButtonState();
+        showScreen('setup');
+
+    </script>
+</body>
+</html>
