@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Montagsmaler Begriffe</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Verhindert Scrollbalken auf dem Body */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .slider-container {
+            display: flex;
+            width: 100%; /* Wird von JS dynamisch angepasst */
+            height: 100vh;
+            transition: transform 0.3s ease-out;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            flex-shrink: 0; /* Verhindert, dass Slides schrumpfen */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 10vw; /* Responsive Schriftgröße */
+            font-weight: bold;
+            color: #333;
+            padding: 20px;
+            box-sizing: border-box;
+            user-select: none; /* Verhindert Textauswahl beim Swipen */
+            border-right: 1px solid #ccc; /* Nur zur visuellen Trennung, wenn nebeneinander */
+        }
+
+        .slide:last-child {
+            border-right: none;
+        }
+
+        /* Für bessere Lesbarkeit im Querformat kann die Schriftgröße angepasst werden */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .slide {
+                font-size: 12vh; /* Passt sich besser an die Höhe an */
+            }
+        }
+        @media (orientation: landscape) and (min-height: 601px) {
+            .slide {
+                font-size: 15vh;
+            }
+        }
+         @media (orientation: portrait) {
+            .slide {
+                font-size: 10vw;
+            }
+        }
+
+
+        /* Optionale Navigationsbuttons für Desktop oder falls Swipen nicht geht */
+        .nav-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background-color: white;
+            border-radius: 5px;
+        }
+        .nav-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="slider-container" id="sliderContainer">
+        <!-- Begriffe werden hier per JavaScript eingefügt -->
+    </div>
+
+    <div class="nav-buttons">
+        <button id="prevBtn" onclick="prevSlide()">Zurück</button>
+        <button id="nextBtn" onclick="nextSlide()">Weiter</button>
+    </div>
+
+    <script>
+        const begriffe = [
+            "Schaukelstuhl", "Regenbogen", "Wolkenkratzer", "Luftballon", "Känguru",
+            "Zahnbürste", "Feuerwerk", "U-Boot", "Bibliothek", "Sandburg",
+            "Schmetterling", "Leuchtturm", "Geige", "Kaffeetasse", "Zelt",
+            "Piratenschiff", "Telefon", "Mikroskop", "Werkzeugkasten", "Palmeninsel",
+            "Rucksack", "Briefkasten", "Popcorn", "Globus", "Schaukel",
+            "Hammer", "Fernseher", "Kompass", "Gitarre", "Skateboard",
+            "Kaktus", "Schneemann", "Apfel", "Fahrrad", "Brille",
+            "Buch", "Kerze", "Schlüssel", "Uhr", "Lampe",
+            "Stuhl", "Tisch", "Blume", "Sonne", "Mond",
+            "Stern", "Wolke", "Baum", "Haus", "Auto",
+            "Schiff", "Flugzeug", "Zug", "Bus", "Katze",
+            "Hund", "Vogel", "Fisch", "Maus", "Elefant",
+            "Giraffe", "Löwe", "Tiger", "Bär", "Schlange",
+            "Spinne", "Ameise", "Biene", "Banane", "Orange",
+            "Erdbeere", "Traube", "Karotte", "Tomate", "Kartoffel",
+            "Brot", "Käse", "Ei", "Milch", "Wasserflasche",
+            "Hut", "Schuh", "Socke", "Hose", "Hemd",
+            "Jacke", "Regenschirm", "Fußball", "Basketball", "Tennisball",
+            "Pinsel", "Farbtopf", "Leiter", "Schere", "Nadel",
+            "Berg", "See", "Fluss", "Straße", "Brücke"
+        ];
+
+        // Fisher-Yates Shuffle Algorithmus für eine gute Durchmischung
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        shuffleArray(begriffe); // Begriffe mischen
+
+        const sliderContainer = document.getElementById('sliderContainer');
+        let currentSlide = 0;
+        const totalSlides = begriffe.length;
+
+        // Slides erstellen
+        begriffe.forEach(begriff => {
+            const slideDiv = document.createElement('div');
+            slideDiv.classList.add('slide');
+            slideDiv.textContent = begriff;
+            sliderContainer.appendChild(slideDiv);
+        });
+
+        // Breite des Containers anpassen (nicht unbedingt nötig bei 100vw für Slides, aber sauber)
+        sliderContainer.style.width = `${totalSlides * 100}vw`;
+
+        const prevButton = document.getElementById('prevBtn');
+        const nextButton = document.getElementById('nextBtn');
+
+        function updateNavButtons() {
+            prevButton.disabled = currentSlide === 0;
+            nextButton.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function showSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                sliderContainer.style.transform = `translateX(-${currentSlide * 100}vw)`;
+                updateNavButtons();
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        }
+
+        // Swipe-Logik
+        let touchstartX = 0;
+        let touchendX = 0;
+        const swipeThreshold = 50; // Mindestdistanz für einen Swipe in Pixel
+
+        sliderContainer.addEventListener('touchstart', function(event) {
+            touchstartX = event.changedTouches[0].screenX;
+        }, { passive: true }); // passive: true für bessere Scroll-Performance
+
+        sliderContainer.addEventListener('touchend', function(event) {
+            touchendX = event.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchendX < touchstartX - swipeThreshold) { // Swipe nach links (nächste Seite)
+                nextSlide();
+            }
+            if (touchendX > touchstartX + swipeThreshold) { // Swipe nach rechts (vorherige Seite)
+                prevSlide();
+            }
+        }
+
+        // Tastaturnavigation für Desktop
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowRight') {
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        // Initialen Zustand setzen
+        showSlide(0);
+
+    </script>
+</body>
+</html>
