@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Montagsmaler Mega Deluxe</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Montagsmaler">
+    <style>
+        html, body { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; background-color: #f0f0f0; color: #333; overscroll-behavior: none; transition: background-color 0.3s ease; }
+        body.category-2-active { background-color: #ffcdd2; }
+
+        .screen { display: none; flex-direction: column; height: 100vh; width: 100vw; box-sizing: border-box; align-items: center; justify-content: center; padding: 20px; text-align: center; position: relative; }
+        .screen.active { display: flex; }
+        
+        #category-2-banner {
+            display: none; position: absolute;
+            top: 110px; /* Angepasst für größeren Header */
+            left: 50%; transform: translateX(-50%);
+            background-color: rgba(255, 82, 82, 0.85); color: white;
+            padding: 15px 30px; /* 10*1.5=15, 20*1.5=30 */
+            border-radius: 12px; /* 8*1.5=12 */
+            font-size: 4.5vh; /* Vorher 3vh, 3*1.5=4.5vh */
+            font-weight: bold; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        #category-2-banner::after {
+            content: ''; position: absolute; top: 100%; left: 50%; margin-left: -15px; /* 10*1.5=15 */ 
+            border-width: 15px; /* 10*1.5=15 */
+            border-style: solid; border-color: rgba(255, 82, 82, 0.85) transparent transparent transparent;
+        }
+
+        #setup-screen h1 { font-size: 5vh; margin-bottom: 25px; }
+        .setting-group { margin-bottom: 25px; }
+        .setting-group label { display: block; font-size: 2.5vh; margin-bottom: 8px; }
+        .timer-setting { display: flex; align-items: center; justify-content: center; font-size: 5vh; }
+        .timer-setting button { font-size: 5vh; padding: 10px 20px; margin: 0 15px; min-width: 80px; border-radius: 8px; border: 1px solid #ccc; background-color: #fff; cursor: pointer; }
+        .timer-setting button:active { background-color: #e0e0e0; }
+        #game-duration-display { min-width: 100px; font-weight: bold; text-align: center; }
+        #round-info-display { font-size: 3vh; margin-top: 15px; color: #555; }
+        #start-game-btn, #fullscreen-btn-setup { font-size: 4vh; padding: 15px 30px; border-radius: 10px; border: none; cursor: pointer; background-color: #2196F3; color: white; margin-top: 20px; }
+        #start-game-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        #game-screen-header { 
+            width: 100%; display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px 30px; /* 10*1.5, 20*1.5 */
+            box-sizing: border-box; background-color: #ddd; 
+            position: absolute; top: 0; left: 0; 
+            font-size: 7.5vh; /* Vorher 5vh, 5*1.5=7.5vh */
+            z-index: 50; 
+        }
+        #score-display-game, #timer-display-game { font-weight: bold; }
+        #score-display-game span, #timer-display-game span { display: inline-block; min-width: 120px; /* 80*1.5=120 */ text-align: right; }
+        #fullscreen-btn-game { font-size: 3vh; padding: 8px 12px; cursor: pointer; background-color: #777; color: white; border: none; border-radius: 5px; }
+        
+        #term-interaction-area { 
+            flex-grow: 1; display: flex; align-items: center; justify-content: space-around; width: 100%; 
+            padding-top: 120px; /* Angepasst für größeren Header, ca. 90*1.33 */ 
+            padding-bottom: 20px; box-sizing: border-box; 
+        }
+        
+        #term-display { 
+            flex-grow: 1; 
+            font-size: 13.125vw; /* Vorher 10.5vw, 10.5*1.25 = 13.125vw */
+            font-weight: bold; line-height: 1.1; /* Ggf. Zeilenhöhe anpassen */
+            overflow-wrap: break-word; word-break: break-word; 
+            margin: 0 20px; /* Etwas mehr Margin */
+            max-width: 50%; /* Ggf. weiter reduzieren */
+        }
+        .side-button { 
+            font-size: 18vh; /* Vorher 12vh, 12*1.5 = 18vh */
+            padding: 45px; /* Vorher 30px, 30*1.5 = 45px */
+            min-width: auto; /* min-width wird jetzt stark durch Padding & Font bestimmt */
+            border: none; border-radius: 33px; /* Vorher 22px, 22*1.5 = 33px */
+            cursor: pointer; font-weight: bold; 
+            flex-shrink: 0; transition: background-color 0.2s ease, transform 0.1s ease; 
+        }
+        .side-button:active { transform: scale(0.95); }
+        #skip-btn { background-color: #f44336; color: white; }
+        #correct-btn { background-color: #4CAF50; color: white; }
+        
+        #no-more-terms-ingame { font-size: 4vw; color: #888; }
+        #game-over-screen { padding-bottom: 20px; }
+        #game-over-screen h2 { font-size: 5vh; margin-bottom: 20px; }
+        #final-score-display { font-size: 7vh; font-weight: bold; margin-bottom: 40px; color: #2196F3; }
+        #restart-game-btn { font-size: 4vh; padding: 15px 30px; border-radius: 10px; border: none; cursor: pointer; background-color: #2196F3; color: white; }
+        
+        @media (max-height: 500px) and (orientation: landscape) { /* Etwas höhere Grenze für Media Query */
+            #term-display { font-size: 11vw; /* 9*1.25=11.25, gerundet */ max-width: 45%; line-height: 1; } 
+            .side-button { font-size: 13.5vh; /* 9*1.5=13.5vh */ padding: 33px; } 
+            #game-screen-header { font-size: 6vh; /* 4*1.5=6vh */ padding: 8px 20px; } 
+            #category-2-banner {top: 85px; font-size: 3.75vh; /* 2.5*1.5=3.75 */ padding: 10px 20px;} 
+            /* Setup Screen Elemente bleiben wie sie sind, da sie sonst zu gedrängt werden könnten */
+            #setup-screen h1 { font-size: 4vh; } 
+            .timer-setting { font-size: 4.5vh; } 
+            .timer-setting button { font-size: 4.5vh; padding: 8px 15px; } 
+            #start-game-btn, #fullscreen-btn-setup, #restart-game-btn { font-size: 3.5vh; } 
+        }
+    </style>
+</head>
+<body>
+    <div id="setup-screen" class="screen active">
+        <h1>Montagsmaler</h1>
+        <div class="setting-group"> <label for="game-duration-display">Spieldauer (Sekunden):</label> <div class="timer-setting"> <button id="decrease-time-btn">-</button> <span id="game-duration-display">60</span> <button id="increase-time-btn">+</button> </div> </div>
+        <div id="round-info-display">Runde: 1</div>
+        <button id="start-game-btn">Los!</button> <button id="fullscreen-btn-setup">Vollbild</button>
+        <p id="all-terms-played-message" style="display:none; color: red; margin-top: 20px;">Alle Begriffe dieser Session wurden gespielt! Lade die Seite neu für neue Begriffe.</p>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div id="game-screen-header"> <div id="score-display-game">Punkte: <span id="score">0</span></div> <button id="fullscreen-btn-game">Vollbild</button> <div id="timer-display-game">Zeit: <span id="time-left">0</span>s</div> </div>
+        <div id="category-2-banner">Doppelte Punktzahl!</div>
+        <div id="term-interaction-area"> <button id="skip-btn" class="side-button">❌</button> <div id="term-display">Begriff lädt...</div> <button id="correct-btn" class="side-button">✅</button> </div>
+        <div id="no-more-terms-ingame" style="display:none;">Keine weiteren Begriffe mehr verfügbar.</div>
+    </div>
+
+    <div id="game-over-screen" class="screen"> <h2>Zeit um!</h2> <p>Deine Punktzahl:</p> <div id="final-score-display">0</div> <button id="restart-game-btn">Neue Runde</button> </div>
+
+    <script>
+        const TERMS_CATEGORY_1_OLD = [ /* Die ursprünglichen ~100 Begriffe */ "Apfel", "Auto", "Banane", "Baum", "Blume", "Buch", "Brille", "Boot", "Ball", "Bett", "Clown", "Computer", "Dach", "Drache", "Eis", "Elefant", "Ente", "Fahrrad", "Fenster", "Fisch", "Flugzeug", "Gabel", "Geschenk", "Gitarre", "Glas", "Hammer", "Hand", "Haus", "Herz", "Hose", "Hund", "Hut", "Insel", "Jacke", "Kaffee", "Kamera", "Katze", "Kerze", "Kino", "Knopf", "Koch", "Koffer", "König", "Kuchen", "Lampe", "Leiter", "Licht", "Löffel", "Maus", "Messer", "Mond", "Musik", "Nase", "Nest", "Orange", "Palme", "Papier", "Pferd", "Pilz", "Pizza", "Pinsel", "Pirat", "Polizei", "Puppe", "Rakete", "Regen", "Reifen", "Ring", "Roboter", "Rose", "Schaf", "Schere", "Schiff", "Schirm", "Schlange", "Schlüssel", "Schmetterling", "Schnee", "Schuh", "Schule", "Sofa", "Sonne", "Spinne", "Stern", "Stift", "Stuhl", "Tasse", "Telefon", "Teller", "Tiger", "Tisch", "Tomate", "Tor", "Treppe", "Tür", "Uhr", "Vogel", "Wolke", "Zahn", "Zaun", "Zelt", "Zitrone", "Zug", "Zwerg" ];
+        const TERMS_CATEGORY_1_NEW = [
+            "Ameise", "Anker", "Ampel", "Angel", "Antenne", "Armband", "Axt", "Baby", "Backofen", "Badewanne", "Bahnhof", "Balkon", "Batterie", "Bauklötze", "Bauernhof", "Becher", "Besen", "Biber", "Biene", "Birne", "Blatt", "Blitz", "Bohrmaschine", "Bonbon", "Brief", "Burg", "Bus", "Chamäleon", "Champignon", "Comic", "Container", "Couch", "Daumen", "Decke", "Delfin", "Diamant", "Dose", "Dusche", "Eichhörnchen", "Eimer", "Einkaufswagen", "Einrad", "Eisenbahn", "Erdbeere", "Esel", "Eule", "Faden", "Fahne", "Fallschirm", "Feder", "Feuer", "Filmklappe", "Finger", "Flasche", "Fledermaus", "Fliege", "Flöte", "Fön", "Fotoapparat", "Frosch", "Fuchs", "Fußball", "Gans", "Garage", "Gardine", "Gehirn", "Geige", "Geld", "Gemüse", "Gespenst", "Giraffe", "Glocke", "Gorilla", "Gras", "Grill", "Gürtel", "Haarbürste", "Hai", "Haltestelle", "Handtuch", "Handschuh", "Harfe", "Hase", "Helm", "Hemd", "Hexe", "Hochzeitstorte", "Holz", "Honig", "Hörnchen", "Hubschrauber", "Huhn", "Hummel", "Hunger", "Igel", "Indianer", "Jagd", "Jeans", "Joghurt", "Kabel", "Kaktus", "Kamel", "Kamin", "Känguru", "Kaninchen", "Kanne", "Kanone", "Kappe", "Karotte", "Karte", "Karton", "Käse", "Kasse", "Kastanie", "Kegel", "Keks", "Keller", "Kette", "Kissen", "Klavier", "Kleber", "Kleid", "Klingel", "Knochen", "Kochlöffel", "Kohlrabi", "Korb", "Korken", "Krabbe", "Kragen", "Kran", "Krawatte", "Kreide", "Kreis", "Kreuz", "Krokodil", "Krone", "Krug", "Kugel", "Kuh", "Labyrinth", "Lagerfeuer", "Lasso", "Laub", "Leguan", "Lehrer", "Libelle", "Lineal", "Lippenstift", "Locke", "Löwe", "Luftballon", "Luftpumpe", "Magnet", "Mais", "Mantel", "Marienkäfer", "Markt", "Marmelade", "Maske", "Matratze", "Medaille", "Meer", "Melone", "Mikrofon", "Milch", "Minute", "Mondfinsternis", "Motorrad", "Möwe", "Mücke", "Mühle", "Müll", "Münze", "Murmel", "Muschel", "Nagel", "Nebel", "Nudeln", "Ofen", "Ohr", "Öl", "Olive", "Opernglas", "Paddel", "Paket", "Panda", "Panzer", "Papagei", "Parfüm", "Park", "Pass", "Pelikan", "Perle", "Pfanne", "Pfeffer", "Pfeil", "Pfeife", "Pfütze", "Pinguin", "Pistole", "Plakat", "Pommes", "Post", "Pullover", "Puzzle", "Qualle", "Radio", "Radiergummi", "Rahmen"
+        ]; // 200 neue Begriffe für Kategorie 1
+
+        const TERMS_CATEGORY_1 = [...TERMS_CATEGORY_1_OLD, ...TERMS_CATEGORY_1_NEW];
+
+        const TERMS_CATEGORY_2_OLD = [ "Astronaut", "Bibliothek", "Chamäleon", "Dinosaurier", "Einhorn", "Feuerwerk", "Geysir", "Hochhaus", "Iglu", "Juwelier", "Känguru", "Leuchtturm", "Mikroskop", "Nilpferd", "Oase", "Pyramide", "Qualle", "Regenbogen", "Sanduhr", "Teleskop", "U-Boot", "Vulkan", "Wasserfall", "Xylofon", "Yoga", "Zeppelin", "Achillesferse", "Barometer", "Dirigent", "Ebbe und Flut", "Fata Morgana", "Gletscher", "Hieroglyphen", "Impressionismus", "Karikatur", "Labyrinth", "Meteorit", "Nostalgie", "Orchester", "Pandemie", "Quarantäne", "Rhetorik", "Skulptur", "Thermometer", "Universum", "Viadukt", "Wellness", "Zentaur", "Alibi", "Bumerang", "Chronometer", "Dominoeffekt", "Empathie", "Fossil", "Globus", "Hypnose", "Ironie", "Jongleur", "Katapult", "Legende", "Monokel", "Neutron", "Omelett", "Papyrus", "Quintessenz", "Recycling", "Synonym", "Tornado", "Utopie", "Vakuum", "Walzer", "Zollstock", "Amphitheater", "Bonsai", "Chiffre", "Dynamit", "Elfenbein", "Fiasko", "Gondel", "Hologramm", "Illusion", "Jacuzzi", "Kryptonit", "Limousine", "Mosaik", "Nymphomanie", "Origami", "Parabel", "Roulette", "Sphinx", "Tsunami", "Vene" ];
+        const TERMS_CATEGORY_2_NEW = [
+            "Aberglaube", "Akupunktur", "Algebra", "Amnesie", "Anarchie", "Anthropologie", "Antiquariat", "Apartheid", "Apokalypse", "Archäologie", "Aristokratie", "Artillerie", "Asyl", "Atomkraftwerk", "Auktion", "Avantgarde", "Ballistik", "Bankrott", "Barrikade", "Bestseller", "Biennale", "Biographie", "Börsencrash", "Botanik", "Boykott", "Bürokratie", "Cartoonist", "Catering", "Choreographie", "Comeback", "Copyright", "Cyberkrieg", "Demagoge", "Demokratie", "Depression", "Deserteur", "Diagnose", "Dialekt", "Diktatur", "Diplomatie", "Diskriminierung", "Dissident", "Doktrin", "Doping", "Drehbuch", "Duell", "Dystopie", "Editorial", "Egoismus", "Embargo", "Epidemie", "Epoche", "Erosion", "Eskalation", "Etikette", "Evolution", "Exil", "Expressionismus", "Extremismus", "Fake News", "Fanatismus", "Faschismus", "Fauna", "Feminismus", "Feudalismus", "Filibuster", "Flora", "Folklore", "Franchise", "Freimaurer", "Fundraising", "Fusion", "Gala", "Galerie", "Garantie", "Gattung", "Gegenkultur", "Gelehrter", "Genetik", "Gentrifizierung", "Gerücht", "Guerilla", "Hattrick", "Hegemonie", "Heimweh", "Held", "Humanismus", "Humor", "Hygiene", "Identität", "Ideologie", "Inflation", "Infrastruktur", "Initiative", "Inquisition", "Insolvenz", "Instinkt", "Intelligenz", "Intermezzo", "Invasion"
+        ]; // 100 neue Begriffe für Kategorie 2
+
+        const TERMS_CATEGORY_2 = [...TERMS_CATEGORY_2_OLD, ...TERMS_CATEGORY_2_NEW];
+
+
+        let availableTermsCat1 = [];
+        let availableTermsCat2 = [];
+        let currentTerm = null;
+        let score = 0;
+        let gameDuration = 60;
+        let timerInterval;
+        let timeLeft = 0;
+        let roundCounter = 1;
+        let termsPlayedThisSessionCount = 0;
+
+        const screens = { setup: document.getElementById('setup-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen') };
+        const decreaseTimeBtn = document.getElementById('decrease-time-btn'); const increaseTimeBtn = document.getElementById('increase-time-btn'); const gameDurationDisplay = document.getElementById('game-duration-display');
+        const roundInfoDisplay = document.getElementById('round-info-display');
+        const startGameBtn = document.getElementById('start-game-btn'); const allTermsPlayedMessage = document.getElementById('all-terms-played-message');
+        const scoreDisplayGame = document.getElementById('score'); const timerDisplayGame = document.getElementById('time-left'); const termDisplayElement = document.getElementById('term-display');
+        const correctButton = document.getElementById('correct-btn'); const skipButton = document.getElementById('skip-btn'); const noMoreTermsIngameMsg = document.getElementById('no-more-terms-ingame');
+        const finalScoreDisplay = document.getElementById('final-score-display'); const restartGameBtn = document.getElementById('restart-game-btn');
+        const fullscreenBtnSetup = document.getElementById('fullscreen-btn-setup'); const fullscreenBtnGame = document.getElementById('fullscreen-btn-game');
+        const bodyElement = document.body;
+        const category2Banner = document.getElementById('category-2-banner');
+
+        function shuffleArray(array) { const newArray = [...array]; for (let i = newArray.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[newArray[i], newArray[j]] = [newArray[j], newArray[i]]; } return newArray; }
+        function showScreen(screenId) { for (const id in screens) screens[id].classList.remove('active'); screens[screenId].classList.add('active'); bodyElement.classList.remove('category-2-active'); if(category2Banner) category2Banner.style.display = 'none';}
+        function initializeAvailableTerms() { availableTermsCat1 = shuffleArray([...TERMS_CATEGORY_1]); availableTermsCat2 = shuffleArray([...TERMS_CATEGORY_2]); termsPlayedThisSessionCount = 0; allTermsPlayedMessage.style.display = 'none'; startGameBtn.disabled = false; }
+        function updateGameDurationDisplay() { gameDurationDisplay.textContent = gameDuration; }
+        decreaseTimeBtn.addEventListener('click', () => { if (gameDuration > 30) { gameDuration -= 30; updateGameDurationDisplay(); } });
+        increaseTimeBtn.addEventListener('click', () => { if (gameDuration < 600) { gameDuration += 30; updateGameDurationDisplay(); } });
+        function updateRoundDisplay() { roundInfoDisplay.textContent = `Runde: ${roundCounter}`; }
+
+        function selectAndRemoveTerm() {
+            let termValue = null; let category = 1;
+            if (score >= 6 && (termsPlayedThisSessionCount % 2 !== 0) && availableTermsCat2.length > 0) { termValue = availableTermsCat2.pop(); category = 2; } 
+            else if (availableTermsCat1.length > 0) { termValue = availableTermsCat1.pop(); category = 1; }
+            else if (availableTermsCat2.length > 0) { termValue = availableTermsCat2.pop(); category = 2; }
+            if (termValue) return { value: termValue, category: category };
+            return null;
+        }
+
+        startGameBtn.addEventListener('click', () => {
+            if (availableTermsCat1.length === 0 && availableTermsCat2.length === 0) { allTermsPlayedMessage.style.display = 'block'; startGameBtn.disabled = true; return; }
+            score = 0; updateScoreDisplay(); currentTerm = null; 
+            noMoreTermsIngameMsg.style.display = 'none'; correctButton.disabled = false; skipButton.disabled = false;
+            showNextTerm(); 
+            if (currentTerm) { timeLeft = gameDuration; timerDisplayGame.textContent = timeLeft; clearInterval(timerInterval); timerInterval = setInterval(updateTimer, 1000); showScreen('game'); } 
+            else { allTermsPlayedMessage.style.display = 'block'; startGameBtn.disabled = true;}
+        });
+
+        function updateTimer() { timeLeft--; timerDisplayGame.textContent = timeLeft; if (timeLeft <= 0) endGame(); }
+        function updateScoreDisplay() { scoreDisplayGame.textContent = score; }
+
+        function showNextTerm() {
+            currentTerm = selectAndRemoveTerm(); 
+            if (currentTerm) {
+                termDisplayElement.textContent = currentTerm.value;
+                termsPlayedThisSessionCount++;
+                noMoreTermsIngameMsg.style.display = 'none'; correctButton.disabled = false; skipButton.disabled = false;
+                if (currentTerm.category === 2) { bodyElement.classList.add('category-2-active'); if(category2Banner) category2Banner.style.display = 'block'; } 
+                else { bodyElement.classList.remove('category-2-active'); if(category2Banner) category2Banner.style.display = 'none'; }
+            } else {
+                termDisplayElement.textContent = "-"; noMoreTermsIngameMsg.style.display = 'block';
+                correctButton.disabled = true; skipButton.disabled = true;
+                bodyElement.classList.remove('category-2-active'); if(category2Banner) category2Banner.style.display = 'none';
+            }
+        }
+
+        correctButton.addEventListener('click', () => { if (currentTerm) { score += (currentTerm.category === 2 ? 4 : 2); updateScoreDisplay(); showNextTerm(); } });
+        skipButton.addEventListener('click', () => { if (currentTerm) { score = Math.max(0, score - 1); updateScoreDisplay(); showNextTerm(); } });
+        function endGame() { clearInterval(timerInterval); finalScoreDisplay.textContent = score; roundCounter++; bodyElement.classList.remove('category-2-active'); if(category2Banner) category2Banner.style.display = 'none'; showScreen('gameOver'); }
+        restartGameBtn.addEventListener('click', () => { updateRoundDisplay(); if (availableTermsCat1.length === 0 && availableTermsCat2.length === 0) { allTermsPlayedMessage.style.display = 'block'; startGameBtn.disabled = true; } else { allTermsPlayedMessage.style.display = 'none'; startGameBtn.disabled = false; } showScreen('setup'); });
+        function getFullscreenElement() { return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement; }
+        function toggleFullscreen() { if (getFullscreenElement()) { if (document.exitFullscreen) document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); } else { const element = document.documentElement; if (element.requestFullscreen) element.requestFullscreen({ navigationUI: "hide" }); else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();}}
+        function updateFullscreenButtonText(isFs) { const text = isFs ? "Vollbild X" : "Vollbild"; if (fullscreenBtnSetup) fullscreenBtnSetup.textContent = text; if (fullscreenBtnGame) fullscreenBtnGame.textContent = text; }
+        if (fullscreenBtnSetup) fullscreenBtnSetup.addEventListener('click', toggleFullscreen); if (fullscreenBtnGame) fullscreenBtnGame.addEventListener('click', toggleFullscreen);
+        document.addEventListener('fullscreenchange', () => updateFullscreenButtonText(!!getFullscreenElement())); document.addEventListener('webkitfullscreenchange', () => updateFullscreenButtonText(!!getFullscreenElement()));
+        
+        initializeAvailableTerms(); updateGameDurationDisplay(); updateRoundDisplay(); 
+        showScreen('setup');
+        if (!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen)) { if(fullscreenBtnSetup) fullscreenBtnSetup.style.display = 'none'; if(fullscreenBtnGame) fullscreenBtnGame.style.display = 'none'; }
+    </script>
+</body>
+</html>
