@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Montagsmaler</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; /* Verhindert Scrollbalken */
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Volle Viewport-Höhe */
+            width: 100vw; /* Volle Viewport-Breite */
+            box-sizing: border-box;
+        }
+
+        #score-display {
+            padding: 15px;
+            font-size: 2.5vh; /* Höhe relativ zum Viewport */
+            font-weight: bold;
+            text-align: center;
+            background-color: #ddd;
+            border-bottom: 2px solid #ccc;
+        }
+        #score-display span {
+            display: inline-block;
+            min-width: 40px; /* Damit die Zahl nicht springt */
+            text-align: right;
+        }
+
+        #term-display {
+            flex-grow: 1; /* Nimmt den verfügbaren Platz ein */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            font-size: 8vw; /* Schriftgröße relativ zur Viewport-Breite (gut für Querformat) */
+            font-weight: bold;
+            line-height: 1.2;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background-color: #ddd;
+            border-top: 2px solid #ccc;
+        }
+
+        .control-button {
+            font-size: 5vh; /* Höhe relativ zum Viewport */
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            min-width: 120px; /* Mindestbreite für die Buttons */
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        .control-button:active {
+            transform: scale(0.95);
+        }
+
+        #correct-btn {
+            background-color: #4CAF50; /* Grün */
+            color: white;
+        }
+        #correct-btn:hover {
+            background-color: #45a049;
+        }
+
+        #skip-btn {
+            background-color: #f44336; /* Rot */
+            color: white;
+        }
+        #skip-btn:hover {
+            background-color: #da190b;
+        }
+        
+        #game-over-message {
+            font-size: 6vw;
+            color: #555;
+        }
+
+        /* Für sehr kleine Bildschirme oder wenn das Wort sehr lang ist */
+        @media (max-height: 400px) and (orientation: landscape) {
+            #term-display {
+                font-size: 6vw;
+            }
+            .control-button {
+                font-size: 4vh;
+                padding: 10px 20px;
+            }
+            #score-display {
+                font-size: 2vh;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score-display">Punkte: <span id="score">0</span></div>
+        <div id="term-display">
+            <!-- Begriff wird hier per JavaScript eingefügt -->
+            Lade Begriffe...
+        </div>
+        <div id="controls">
+            <button id="skip-btn" class="control-button">❌</button>
+            <button id="correct-btn" class="control-button">✅</button>
+        </div>
+    </div>
+
+    <script>
+        const terms = [
+            "Apfel", "Auto", "Banane", "Baum", "Blume", "Buch", "Brille", "Boot", "Ball", "Bett",
+            "Clown", "Computer", "Dach", "Drache", "Eis", "Elefant", "Ente", "Fahrrad", "Fenster", "Fisch",
+            "Flugzeug", "Gabel", "Geschenk", "Gitarre", "Glas", "Hammer", "Hand", "Haus", "Herz", "Hose",
+            "Hund", "Hut", "Insel", "Jacke", "Kaffee", "Kamera", "Katze", "Kerze", "Kino", "Knopf",
+            "Koch", "Koffer", "König", "Kuchen", "Lampe", "Leiter", "Licht", "Löffel", "Maus", "Messer",
+            "Mond", "Musik", "Nase", "Nest", "Orange", "Palme", "Papier", "Pferd", "Pilz", "Pizza",
+            "Pinsel", "Pirat", "Polizei", "Puppe", "Rakete", "Regen", "Reifen", "Ring", "Roboter", "Rose",
+            "Schaf", "Schere", "Schiff", "Schirm", "Schlange", "Schlüssel", "Schmetterling", "Schnee", "Schuh", "Schule",
+            "Sofa", "Sonne", "Spinne", "Stern", "Stift", "Stuhl", "Tasse", "Telefon", "Teller", "Tiger",
+            "Tisch", "Tomate", "Tor", "Treppe", "Tür", "Uhr", "Vogel", "Wolke", "Zahn", "Zaun",
+            "Zelt", "Zitrone", "Zug", "Zwerg" // Das sind 104, macht aber nichts.
+        ];
+
+        let currentTermIndex = 0;
+        let score = 0;
+        let shuffledTerms = [];
+
+        const termDisplayElement = document.getElementById('term-display');
+        const scoreElement = document.getElementById('score');
+        const correctButton = document.getElementById('correct-btn');
+        const skipButton = document.getElementById('skip-btn');
+        const controlsElement = document.getElementById('controls');
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // ES6 destructuring swap
+            }
+        }
+
+        function updateScoreDisplay() {
+            scoreElement.textContent = score;
+        }
+
+        function showNextTerm() {
+            if (currentTermIndex < shuffledTerms.length) {
+                termDisplayElement.textContent = shuffledTerms[currentTermIndex];
+                termDisplayElement.classList.remove('game-over-message');
+            } else {
+                termDisplayElement.textContent = "Spiel Ende!";
+                termDisplayElement.classList.add('game-over-message');
+                correctButton.disabled = true;
+                skipButton.disabled = true;
+                correctButton.style.opacity = "0.5";
+                skipButton.style.opacity = "0.5";
+            }
+        }
+
+        correctButton.addEventListener('click', () => {
+            if (currentTermIndex < shuffledTerms.length) {
+                score += 2;
+                currentTermIndex++;
+                updateScoreDisplay();
+                showNextTerm();
+            }
+        });
+
+        skipButton.addEventListener('click', () => {
+            if (currentTermIndex < shuffledTerms.length) {
+                score = Math.max(0, score - 1); // Punkte können nicht negativ werden
+                currentTermIndex++;
+                updateScoreDisplay();
+                showNextTerm();
+            }
+        });
+
+        // Spiel initialisieren
+        function startGame() {
+            shuffledTerms = [...terms]; // Kopie erstellen, um das Original nicht zu verändern
+            shuffleArray(shuffledTerms);
+            currentTermIndex = 0;
+            score = 0;
+            updateScoreDisplay();
+            showNextTerm();
+            correctButton.disabled = false;
+            skipButton.disabled = false;
+            correctButton.style.opacity = "1";
+            skipButton.style.opacity = "1";
+        }
+
+        // Spiel beim Laden starten
+        startGame();
+
+    </script>
+</body>
+</html>
